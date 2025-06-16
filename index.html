@@ -75,7 +75,7 @@
   </div>
 
   <script>
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbxbiJAaOh8aPul--6ddj7BizL30sposTxY_wwuV7s0B5TNbZEJ-VrfBSETwzPUJoI2qug/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbySGsJv0aN_zZRrxu200hg0icdFJ17PSp8pdiYcrpN1B02_AdsxClh5BgiglnccEVWmTA/exec';
 
     function toggleChat() {
       const chat = document.getElementById("chat-container");
@@ -94,13 +94,17 @@
         body: JSON.stringify({ message }),
         headers: { 'Content-Type': 'application/json' }
       })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
       .then(data => {
         const reply = data.fulfillmentText || "Sorry, I didn't understand that.";
         addMessage('bot', reply);
       })
-      .catch(() => {
-        addMessage('bot', "There was an error contacting the help bot.");
+      .catch((error) => {
+        console.error('Chatbot Error:', error);
+        addMessage('bot', "⚠️ There was an error contacting the help bot.");
       });
     }
 
