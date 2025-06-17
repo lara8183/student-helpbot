@@ -1,95 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lawrenceville HelpBot</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Help Bot</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 2em;
-      background-color: #f8f8f8;
-    }
-    #chatbox {
-      max-width: 600px;
-      margin: auto;
-    }
-    .bubble {
-      padding: 10px;
-      margin: 10px 0;
-      border-radius: 8px;
-    }
-    .user {
-      background: #cce5ff;
-      text-align: right;
-    }
-    .bot {
-      background: #e2e3e5;
-      text-align: left;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 1em;
-    }
-    #inputSection {
+      background: #f9f9f9;
+      margin: 0;
+      padding: 0;
       display: flex;
-      gap: 10px;
-      margin-top: 1em;
+      flex-direction: column;
+      height: 100vh;
     }
-    #sendBtn {
-      background-color: #d9534f;
+
+    header {
+      background: #8c1d40;
       color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    #chatbox {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin: 0.5rem 0;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background: #e0f7fa;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .bot {
+      background: #fff9c4;
+      align-self: flex-start;
+      margin-right: auto;
+    }
+
+    #inputArea {
+      display: flex;
+      padding: 1rem;
+      background: #eee;
+    }
+
+    #userInput {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-right: 0.5rem;
+    }
+
+    #sendBtn {
+      padding: 0.5rem 1rem;
+      background-color: #e53935;
       border: none;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #sendBtn:hover {
+      background-color: #c62828;
+    }
+
+    #status {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #999;
+      margin-top: 0.25rem;
     }
   </style>
 </head>
 <body>
-  <h2>Lawrenceville Student HelpBot</h2>
+  <header>Student Help Bot</header>
   <div id="chatbox"></div>
-  <div id="inputSection">
+
+  <div id="inputArea">
     <input type="text" id="userInput" placeholder="Ask me anything..." />
     <button id="sendBtn">Send</button>
   </div>
+  <div id="status"></div>
 
   <script>
-    const chatbox = document.getElementById('chatbox');
-    const userInput = document.getElementById('userInput');
-    const sendBtn = document.getElementById('sendBtn');
-
-    const WORKER_URL = "https://student-helpbot.lluca.workers.dev/";
-
-    function appendMessage(text, sender) {
-      const bubble = document.createElement('div');
-      bubble.className = `bubble ${sender}`;
-      bubble.innerText = text;
-      chatbox.appendChild(bubble);
-      chatbox.scrollTop = chatbox.scrollHeight;
-    }
+    const chatbox = document.getElementById("chatbox");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const status = document.getElementById("status");
 
     async function sendMessage() {
       const message = userInput.value.trim();
       if (!message) return;
 
-      appendMessage(message, 'user');
-      userInput.value = '';
+      appendMessage(message, "user");
+      userInput.value = "";
+      status.textContent = "Thinking...";
 
       try {
-        const response = await fetch(WORKER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("https://student-helpbot.lluca.workers.dev/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({ message })
         });
 
         const data = await response.json();
-        appendMessage(data.reply || "🤖 No reply received.", 'bot');
-      } catch (e) {
-        appendMessage("⚠️ Error: Failed to fetch", 'bot');
+        if (data.reply) {
+          appendMessage(data.reply, "bot");
+          status.textContent = "";
+        } else {
+          appendMessage("🤖 No reply received.", "bot");
+          status.textContent = "⚠️ OpenAI returned no answer.";
+        }
+      } catch (error) {
+        appendMessage("⚠️ Error: " + error.message, "bot");
+        status.textContent = "⚠️ Failed to fetch";
       }
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-    userInput.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendMessage();
+    function appendMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `message ${sender}`;
+      msg.textContent = text;
+      chatbox.appendChild(msg);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+
+    sendBtn.onclick = sendMessage;
+    userInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendMessage();
     });
   </script>
 </body>
